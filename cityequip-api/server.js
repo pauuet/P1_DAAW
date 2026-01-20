@@ -26,12 +26,18 @@ app.use(express.json());
 app.use('/equipments', equipmentRoutes);
 
 // EMERGENCY RESET ROUTE
+// EMERGENCY RESET ROUTE
+const Equipment = require('./models/Equipment'); // Import Model
 app.get('/debug-reset', async (req, res) => {
     try {
-        await mongoose.connection.collection('equipments').deleteMany({});
+        console.log('Force Reset: Deleting all equipments...');
+        const result = await Equipment.deleteMany({});
+        console.log(`Force Reset: Deleted ${result.deletedCount} documents.`);
+        console.log('Force Reset: Triggering loader...');
         await loadData();
-        res.send('Database reset and reloaded. Check logs.');
+        res.send(`Reset Complete. Deleted: ${result.deletedCount}. Check logs for load status.`);
     } catch (e) {
+        console.error('Reset Failed:', e);
         res.status(500).send(e.message);
     }
 });
