@@ -22,7 +22,19 @@ app.use(cors());
 app.use(express.json());
 
 // Routes
+// Routes
 app.use('/equipments', equipmentRoutes);
+
+// EMERGENCY RESET ROUTE
+app.get('/debug-reset', async (req, res) => {
+    try {
+        await mongoose.connection.collection('equipments').deleteMany({});
+        await loadData();
+        res.send('Database reset and reloaded. Check logs.');
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
 
 // Start our app!
 app.set('port', process.env.PORT || 7777);
