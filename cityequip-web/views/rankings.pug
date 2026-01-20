@@ -1,0 +1,31 @@
+extends layout
+
+block content
+    h1 Rankings
+
+    .row
+        .col-md-6
+            h3 Global Top 3
+            if globalTop.length === 0
+                p No global ratings yet.
+            else
+                ul.list-group
+                    each item in globalTop
+                        li.list-group-item
+                            h5
+                                a(href=`/equipments/${item.id}`)= item.name
+                            span.badge.bg-warning.text-dark #{parseFloat(item.avgRating).toFixed(1)} ★
+        
+        .col-md-6
+            h3 Your Top 3 Favorites
+            if !currentUser
+                p <a href="/auth/login">Login</a> to see your personal top.
+            else if personalTop.length === 0
+                p You haven't rated anything yet.
+            else
+                ul.list-group
+                    each item in personalTop
+                        li.list-group-item
+                            h5
+                                a(href=`/equipments/${item.id}`)= item.name
+                            span.badge.bg-success #{item.rating} ★

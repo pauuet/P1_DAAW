@@ -1,0 +1,28 @@
+extends layout
+
+block content
+    h2 Your Profile: #{currentUser.username}
+    p Role: #{currentUser.role}
+    
+    h3 Your Reviews
+    if reviews.length === 0
+        p You haven't reviewed any equipment yet.
+    else
+        table.table
+            thead
+                tr
+                    th Equipment
+                    th Rating
+                    th Comment
+                    th Date
+                    th Actions
+            tbody
+                each review in reviews
+                    tr
+                        td
+                            a(href=`/equipments/${review.equipmentId}`)= review.equipmentName
+                        td= review.rating
+                        td= review.comment
+                        td= new Date(review.updatedAt).toLocaleDateString()
+                        td
+                            a.btn.btn-sm.btn-primary(href=`/equipments/${review.equipmentId}`) Edit

@@ -1,0 +1,23 @@
+extends layout
+
+block content
+  h1 City Equipments
+  
+  // Filter Form
+  form(method="GET" action="/equipments" class="mb-4 row g-3")
+    .col-auto
+      input.form-control(type="text" name="type" placeholder="Filter by Type..." value=filterType)
+    .col-auto
+      button.btn.btn-primary(type="submit") Filter
+    .col-auto
+      a.btn.btn-secondary(href="/equipments") Clear
+
+  .row.row-cols-1.row-cols-md-3.g-4
+    each eq in equipments
+      .col
+        .card.h-100
+          .card-body
+            h5.card-title= eq.name
+            h6.card-subtitle.mb-2.text-muted= eq.type
+            p.card-text= eq.address
+            a.btn.btn-outline-primary(href=`/equipments/${eq._id}`) View Details

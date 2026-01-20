@@ -1,0 +1,78 @@
+extends layout
+
+block content
+  .row
+    .col-md-8
+        h1= equipment.name
+        span.badge.bg-secondary= equipment.type
+        if avgRating > 0
+            span.badge.bg-warning.text-dark.ms-2 #{avgRating} ★
+        else
+            span.badge.bg-light.text-dark.ms-2 No ratings yet
+
+        if currentUser && currentUser.role === 'admin'
+            div.mt-2
+                a.btn.btn-warning.btn-sm.me-2(href=`/admin/edit/${equipment._id}`) Edit
+                form(action=`/admin/delete/${equipment._id}` method="POST" style="display:inline")
+                    button.btn.btn-danger.btn-sm(type="submit" onclick="return confirm('Are you sure?')") Delete
+
+        hr
+        p 
+            strong Address: 
+            | #{equipment.address}
+        p
+            strong Schedule: 
+            | #{equipment.schedule}
+        p
+            strong Phone: 
+            | #{equipment.phone}
+        p
+            strong District: 
+            | #{equipment.district}
+        p
+            strong Municipal: 
+            | #{equipment.isMunicipal ? 'Yes' : 'No'}
+
+        h3 Location
+        #map.map-container.mb-4
+        
+    .col-md-4
+        h3 Reviews
+        if reviews.length === 0
+            p No reviews yet.
+        else
+            each review in reviews
+                .card.mb-2
+                    .card-body
+                        h5.card-title #{review.user.username} 
+                            span.text-warning #{review.rating} ★
+                        p.card-text= review.comment
+                        small.text-muted= new Date(review.updatedAt).toLocaleDateString()
+
+        if currentUser
+            h3.mt-4 Leave a Review
+            form(method="POST" action=`/equipments/${equipment._id}/reviews`)
+                .mb-3
+                    label Rating
+                    select.form-control(name="rating")
+                        option(value="5") 5 - Excellent
+                        option(value="4") 4 - Very Good
+                        option(value="3") 3 - Good
+                        option(value="2") 2 - Fair
+                        option(value="1") 1 - Poor
+                .mb-3
+                    label Comment
+                    textarea.form-control(name="comment" rows="3")
+                button.btn.btn-primary(type="submit") Submit
+        else
+            .alert.alert-info Please <a href="/auth/login">login</a> to leave a review.
+
+block scripts
+  script.
+    var map = L.map('map').setView([#{equipment.location.coordinates[1]}, #{equipment.location.coordinates[0]}], 16);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+    L.marker([#{equipment.location.coordinates[1]}, #{equipment.location.coordinates[0]}]).addTo(map)
+      .bindPopup("#{equipment.name}")
+      .openPopup();

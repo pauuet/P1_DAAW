@@ -1,0 +1,115 @@
+const express = require('express');
+const router = express.Router();
+const axios = require('axios');
+const Review = require('../models/Review');
+
+const API_URL = process.env.API_URL;
+
+// List
+router.get('/', async (req, res) => {
+    try {
+        const { type } = req.query;
+        const url = type ? `${API_URL}?type=${encodeURIComponent(type)}` : API_URL;
+        const { data } = await axios.get(url);
+
+        // Get distinct types for filter dropdown? 
+        // We can extract them from the current list or better, having a distinct endpoint. 
+        // For now, let's extract unique types from the full list client side or just simplified here.
+        // If filtered, we can't see all types. Ideally API supports /types.
+        // Let's just pass the data.
+
+        res.render('index', { equipments: data, filterType: type });
+    } catch (err) {
+        res.render('index', { equipments: [], error: 'API Error: ' + err.message });
+    }
+});
+
+// Rankings
+router.get('/rankings', async (req, res) => {
+    try {
+        // Global Top 3
+        const globalTop = await Review.aggregate([
+            { $group: { _id: '$equipmentId', avgRating: { $avg: '$rating' } } },
+            { $sort: { avgRating: -1 } },
+            { $limit: 3 }
+        ]);
+
+        // Personal Top 3
+        let personalTop = [];
+        if (req.session.user) {
+            personalTop = await Review.find({ user: req.session.user._id })
+                .sort({ rating: -1 })
+                .limit(3);
+        }
+
+        // Hydrate names (could use a helper function)
+        const hydrate = async (list) => {
+            return Promise.all(list.map(async (item) => {
+                const id = item._id || item.equipmentId; // Aggregate returns _id, Find returns equipmentId
+                try {
+                    const { data } = await axios.get(`${API_URL}/${id}`);
+                    return { ...item, name: data.name, id: id, avgRating: item.avgRating || item.rating };
+                } catch (e) {
+                    return { ...item, name: 'Unknown', id: id };
+                }
+            }));
+        };
+
+        const globalHydrated = await hydrate(globalTop);
+        const personalHydrated = await hydrate(personalTop);
+
+        res.render('rankings', { globalTop: globalHydrated, personalTop: personalHydrated });
+    } catch (err) {
+        res.render('error', { error: err.message });
+    }
+});
+
+// Map View (All items)
+router.get('/map', async (req, res) => {
+    try {
+        const { type } = req.query;
+        const url = type ? `${API_URL}?type=${encodeURIComponent(type)}` : API_URL;
+        const { data } = await axios.get(url);
+        res.render('map', { equipments: data, filterType: type });
+    } catch (err) {
+        res.render('map', { equipments: [], error: err.message });
+    }
+});
+
+// Detail
+router.get('/:id', async (req, res) => {
+    try {
+        const apiRes = await axios.get(`${API_URL}/${req.params.id}`);
+        const equipment = apiRes.data;
+
+        // Get Reviews
+        const reviews = await Review.find({ equipmentId: req.params.id }).populate('user', 'username');
+
+        // Calculate Avg Rating
+        const avgRating = reviews.length ? (reviews.reduce((a, b) => a + b.rating, 0) / reviews.length).toFixed(1) : 0;
+
+        res.render('detail', { equipment, reviews, avgRating });
+    } catch (err) {
+        res.render('error', { error: 'Could not load equipment: ' + err.message });
+    }
+});
+
+// Add Review
+router.post('/:id/reviews', async (req, res) => {
+    if (!req.session.user) return res.status(401).send('Unauthorized');
+
+    try {
+        const { rating, comment } = req.body;
+        // Upsert review?
+        await Review.findOneAndUpdate(
+            { user: req.session.user._id, equipmentId: req.params.id },
+            { rating, comment },
+            { upsert: true, new: true }
+        );
+        res.redirect(`/equipments/${req.params.id}`);
+    } catch (err) {
+        res.redirect(`/equipments/${req.params.id}?error=${encodeURIComponent(err.message)}`);
+    }
+});
+
+module.exports = router;

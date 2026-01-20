@@ -1,0 +1,26 @@
+extends layout
+
+block content
+    h2 Global Map
+    form(method="GET" action="/equipments/map" class="mb-3 row g-3")
+        .col-auto
+            input.form-control(type="text" name="type" placeholder="Filter Type..." value=filterType)
+        .col-auto
+            button.btn.btn-primary(type="submit") Filter
+
+    #map.map-container(style="height: 600px;")
+
+block scripts
+    script.
+        var map = L.map('map').setView([41.1189, 1.2445], 13); // Tarragona Center
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        
+        var equipments = !{JSON.stringify(equipments)};
+        
+        equipments.forEach(function(eq) {
+            if(eq.location && eq.location.coordinates) {
+                L.marker([eq.location.coordinates[1], eq.location.coordinates[0]])
+                .addTo(map)
+                .bindPopup("<b>" + eq.name + "</b><br>" + eq.type + "<br><a href='/equipments/" + eq._id + "'>Details</a>");
+            }
+        });

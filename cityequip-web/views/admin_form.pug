@@ -1,0 +1,30 @@
+extends layout
+
+block content
+    h2= title
+    if error
+        .alert.alert-danger= error
+
+    - const actionUrl = equipment._id ? '/admin/edit/' + equipment._id : '/admin/create';
+    form(method="POST" action=actionUrl)
+        .mb-3
+            label Name
+            input.form-control(name="name" value=equipment.name required)
+        .mb-3
+            label Type
+            input.form-control(name="type" value=equipment.type required)
+        .row
+            .col
+                label Latitude
+                input.form-control(name="lat" value=(equipment.lat || (equipment.location && equipment.location.coordinates ? equipment.location.coordinates[1] : '')) required)
+            .col
+                label Longitude
+                input.form-control(name="lng" value=(equipment.lng || (equipment.location && equipment.location.coordinates ? equipment.location.coordinates[0] : '')) required)
+        .mb-3
+            label Address
+            input.form-control(name="address" value=equipment.address)
+        .mb-3
+            label Phone
+            input.form-control(name="phone" value=equipment.phone)
+        
+        button.btn.btn-success(type="submit") Save
