@@ -79,9 +79,17 @@ router.get('/rankings', async (req, res) => {
 router.get('/map', async (req, res) => {
     try {
         const { type } = req.query;
-        const url = type ? `${API_URL}?type=${encodeURIComponent(type)}` : API_URL;
+        // Map needs ALL points, so we request a high limit.
+        // Also handle the search/filter if present.
+        let url = `${API_URL}?limit=2000`;
+        if (type) url += `&type=${encodeURIComponent(type)}`;
+
         const { data } = await axios.get(url);
-        res.render('map', { equipments: data, filterType: type });
+
+        // Handle new API structure { equipments: [...], ... } vs old [...]
+        const equipments = data.equipments || data;
+
+        res.render('map', { equipments, filterType: type });
     } catch (err) {
         res.render('map', { equipments: [], error: err.message });
     }
