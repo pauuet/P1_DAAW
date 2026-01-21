@@ -56,7 +56,9 @@ router.get('/rankings', async (req, res) => {
         // Hydrate names (could use a helper function)
         const hydrate = async (list) => {
             return Promise.all(list.map(async (item) => {
-                const id = item._id || item.equipmentId; // Aggregate returns _id, Find returns equipmentId
+                // BUG FIX: Check equipmentId first (for Mongoose Docs in Personal Top), 
+                // then _id (for Aggregation Results in Global Top).
+                const id = item.equipmentId || item._id;
                 try {
                     const { data } = await axios.get(`${API_URL}/${id}`);
                     return { ...item, name: data.name, id: id, avgRating: item.avgRating || item.rating };
