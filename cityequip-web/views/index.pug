@@ -20,5 +20,5 @@ block content
             h5.card-title= eq.name
             h6.card-subtitle.mb-2.text-muted= eq.type
             p.card-text= eq.address
-            a.btn.btn-outline-primary(href=`/equipments/${eq._id || eq.id}`) View Details
+            a.btn.btn-outline-primary(href="/equipments/" + eq._id) View Details
             // Debug: #{eq._id}
