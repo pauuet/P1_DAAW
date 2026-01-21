@@ -21,4 +21,50 @@ block content
             h6.card-subtitle.mb-2.text-muted= eq.type
             p.card-text= eq.address
             a.btn.btn-outline-primary(href="/equipments/" + eq._id) View Details
-            // Debug: #{eq._id}
+
+  // Pagination
+  if totalPages > 1
+    nav.mt-4(aria-label="Page navigation")
+      ul.pagination.justify-content-center
+        // Previous
+        if currentPage > 1
+          li.page-item
+            a.page-link(href=`/equipments?page=${currentPage - 1}${filterType ? '&type=' + filterType : ''}`) Previous
+        else
+          li.page-item.disabled
+            span.page-link Previous
+
+        // Pages (Simplified: show all or a subset? Let's show all for < 20 pages, or just Prev/Next if > 20?)
+        // Let's show a window around current page to avoid huge lists
+        - var startPage = Math.max(1, currentPage - 2)
+        - var endPage = Math.min(totalPages, currentPage + 2)
+        // Adjust start/end to show at least 5 links if possible
+        - if (endPage - startPage < 4)
+             - if (startPage === 1) endPage = Math.min(totalPages, startPage + 4)
+             - else if (endPage === totalPages) startPage = Math.max(1, endPage - 4)
+
+        if startPage > 1
+            li.page-item
+                a.page-link(href=`/equipments?page=1${filterType ? '&type=' + filterType : ''}`) 1
+            if startPage > 2
+                li.page-item.disabled
+                    span.page-link ...
+
+        - for (var i = startPage; i <= endPage; i++)
+          li.page-item(class=(i === currentPage ? 'active' : ''))
+            a.page-link(href=`/equipments?page=${i}${filterType ? '&type=' + filterType : ''}`)= i
+
+        if endPage < totalPages
+            if endPage < totalPages - 1
+                li.page-item.disabled
+                    span.page-link ...
+            li.page-item
+                a.page-link(href=`/equipments?page=${totalPages}${filterType ? '&type=' + filterType : ''}`)= totalPages
+
+        // Next
+        if currentPage < totalPages
+          li.page-item
+            a.page-link(href=`/equipments?page=${currentPage + 1}${filterType ? '&type=' + filterType : ''}`) Next
+        else
+          li.page-item.disabled
+            span.page-link Next

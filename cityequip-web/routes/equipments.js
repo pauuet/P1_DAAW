@@ -8,17 +8,28 @@ const API_URL = process.env.API_URL;
 // List
 router.get('/', async (req, res) => {
     try {
-        const { type } = req.query;
-        const url = type ? `${API_URL}?type=${encodeURIComponent(type)}` : API_URL;
+        const { type, page } = req.query;
+
+        let url = API_URL;
+        const params = [];
+        if (type) params.push(`type=${encodeURIComponent(type)}`);
+        if (page) params.push(`page=${encodeURIComponent(page)}`);
+        if (params.length) url += `?${params.join('&')}`;
+
         const { data } = await axios.get(url);
 
-        // Get distinct types for filter dropdown? 
-        // We can extract them from the current list or better, having a distinct endpoint. 
-        // For now, let's extract unique types from the full list client side or just simplified here.
-        // If filtered, we can't see all types. Ideally API supports /types.
-        // Let's just pass the data.
+        // API now returns object { equipments, totalPages, currentPage }
+        // Fallback for backward compatibility if API not updated yet:
+        const equipments = data.equipments || data;
+        const totalPages = data.totalPages || 1;
+        const currentPage = data.currentPage || 1;
 
-        res.render('index', { equipments: data, filterType: type });
+        res.render('index', {
+            equipments,
+            filterType: type,
+            totalPages,
+            currentPage
+        });
     } catch (err) {
         res.render('index', { equipments: [], error: 'API Error: ' + err.message });
     }

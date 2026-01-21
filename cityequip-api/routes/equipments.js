@@ -6,14 +6,27 @@ const verifyApiKey = require('../middleware/auth');
 // GET /equipments - List all or filter by type
 router.get('/', async (req, res) => {
     try {
-        const { type } = req.query;
+        const { type, page = 1, limit = 12 } = req.query;
         const filter = {};
         if (type) {
             filter.type = type;
         }
-        // Return list. Maybe select fewer fields for list view? Returning all for now as per requirements "listado completo".
-        const equipments = await Equipment.find(filter);
-        res.json(equipments);
+
+        const count = await Equipment.countDocuments(filter);
+        const totalPages = Math.ceil(count / limit);
+        const currentPage = Math.max(1, parseInt(page));
+        const skip = (currentPage - 1) * limit;
+
+        const equipments = await Equipment.find(filter)
+            .skip(skip)
+            .limit(parseInt(limit));
+
+        res.json({
+            equipments,
+            totalPages,
+            currentPage,
+            totalItems: count
+        });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
